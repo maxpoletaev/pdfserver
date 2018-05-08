@@ -48,10 +48,7 @@ def open_tab(url, timeout=None):
 def url_to_pdf(url, print_params):
     with open_tab(url, timeout=10) as tab:
         chrome_response = tab.Page.printToPDF(**print_params)
-        pdf_content = base64.b64decode(chrome_response['data'])
-
-    response = Response(pdf_content, content_type='application/pdf')
-    return response
+        return base64.b64decode(chrome_response['data'])
 
 
 def html_to_pdf(html, print_params):
@@ -64,8 +61,7 @@ def html_to_pdf(html, print_params):
         pdf_content = base64.b64decode(chrome_response['data'])
 
     html_file.close()
-    response = Response(pdf_content, content_type='application/pdf')
-    return response
+    return pdf_content
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -75,10 +71,12 @@ def print_to_pdf():
     print_params = validate_schema(print_params_schema, request_args)
 
     if url:
-        return url_to_pdf(url, print_params)
+        pdf_content = url_to_pdf(url, print_params)
+        return Response(pdf_content, content_type='application/pdf')
 
     if request.method == 'POST':
         data = request.get_data()
-        return html_to_pdf(data, print_params)
+        pdf_content = html_to_pdf(data, print_params)
+        return Response(pdf_content, content_type='application/pdf')
 
     return Response()
